@@ -1,8 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/providers/character_provider.dart';
+import 'package:myapp/providers/inventory_provider.dart';
 import 'package:myapp/widgets/character_card.dart';
+import 'package:myapp/widgets/paginated_grid.dart';
+import 'package:myapp/models/inventory_item.dart';
 
 class CharacterScreen extends StatefulWidget {
   const CharacterScreen({super.key});
@@ -12,27 +14,16 @@ class CharacterScreen extends StatefulWidget {
 }
 
 class _CharacterScreenState extends State<CharacterScreen> {
-  // --- IMAGENS DISPONÍVEIS (Inventário da "loja") ---
-  final List<String> characterImages = [
-    'assets/images/characters/character_1_main.png',
-    'assets/images/characters/character_2_police.png',
-    'assets/images/characters/character_3_harrypotter.png',
-    'assets/images/characters/character_4_cowboy.png',
-    'assets/images/characters/character_5_robber.png',
-  ];
-
-  final List<String> backgroundImages = [
-    'assets/images/backgrounds/background_1_grass.png',
-    'assets/images/backgrounds/background_2_cave.png',
-  ];
-
-  // O estado local foi completamente removido daqui.
-
   @override
   Widget build(BuildContext context) {
-    // 1. Conecta-se ao CharacterProvider para ler e modificar o estado.
     final characterProvider = Provider.of<CharacterProvider>(context);
+    final inventoryProvider = Provider.of<InventoryProvider>(context);
     final theme = Theme.of(context);
+
+    final ownedCharacters = inventoryProvider.ownedItems.where((item) => item.type == ItemType.character).toList();
+    final ownedBackgrounds = inventoryProvider.ownedItems.where((item) => item.type == ItemType.background).toList();
+    final ownedPotions = inventoryProvider.ownedItems.where((item) => item.type == ItemType.potion).toList();
+
 
     return DefaultTabController(
       length: 3,
@@ -43,7 +34,6 @@ class _CharacterScreenState extends State<CharacterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 2. O CharacterCard agora lê os dados diretamente do provider.
               CharacterCard(
                 backgroundImage: characterProvider.selectedBackground,
                 characterImage: characterProvider.selectedCharacter,
@@ -70,21 +60,71 @@ class _CharacterScreenState extends State<CharacterScreen> {
                       ),
                       const SizedBox(height: 8),
                       SizedBox(
-                        height: 150,
+                        height: 250, // Adjusted height to accommodate paginator
                         child: TabBarView(
                           children: [
-                            // 3. Clicar em um item agora chama o provider para atualizar o estado global.
-                            _buildInventoryGrid(
-                              imagePaths: characterImages,
-                              currentlySelectedPath: characterProvider.selectedCharacter,
-                              onSelect: (path) => characterProvider.updateCharacter(path),
+                            PaginatedGrid<ShopItem>(
+                              items: ownedCharacters,
+                              itemBuilder: (item) {
+                                final bool isSelected = characterProvider.selectedCharacter == item.assetPath;
+                                return GestureDetector(
+                                  onTap: () => characterProvider.updateCharacter(item.assetPath),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.withAlpha(128),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Image.asset(item.assetPath, fit: BoxFit.cover),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                            _buildInventoryGrid(
-                              imagePaths: backgroundImages,
-                              currentlySelectedPath: characterProvider.selectedBackground,
-                              onSelect: (path) => characterProvider.updateBackground(path),
+                            PaginatedGrid<ShopItem>(
+                              items: ownedBackgrounds,
+                              itemBuilder: (item) {
+                                final bool isSelected = characterProvider.selectedBackground == item.assetPath;
+                                return GestureDetector(
+                                  onTap: () => characterProvider.updateBackground(item.assetPath),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.withAlpha(128),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Image.asset(item.assetPath, fit: BoxFit.cover),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                            Center(child: Text('Nenhuma poção no inventário.', style: theme.textTheme.bodyMedium)),
+                             if (ownedPotions.isEmpty)
+                              Center(child: Text('Nenhuma poção no inventário.', style: theme.textTheme.bodyMedium))
+                            else
+                              PaginatedGrid<ShopItem>(
+                                items: ownedPotions,
+                                itemBuilder: (item) {
+                                  return Card(
+                                    child: Column(
+                                      children: [
+                                        Expanded(
+                                          child: Image.asset(item.assetPath, fit: BoxFit.cover),
+                                        ),
+                                        Text(item.name),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                           ],
                         ),
                       ),
@@ -122,41 +162,6 @@ class _CharacterScreenState extends State<CharacterScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  // 4. O grid agora recebe o item selecionado para destacar a borda corretamente.
-  Widget _buildInventoryGrid({
-    required List<String> imagePaths,
-    required String currentlySelectedPath,
-    required Function(String) onSelect,
-  }) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(10),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4, crossAxisSpacing: 10, mainAxisSpacing: 10,
-      ),
-      itemCount: imagePaths.length,
-      itemBuilder: (context, index) {
-        final path = imagePaths[index];
-        final bool isSelected = currentlySelectedPath == path;
-        return GestureDetector(
-          onTap: () => onSelect(path),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.withAlpha(128),
-                width: 2,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: Image.asset(path, fit: BoxFit.cover),
-            ),
-          ),
-        );
-      },
     );
   }
 

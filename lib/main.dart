@@ -7,7 +7,8 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:myapp/screens/main_screen.dart';
 import 'package:myapp/theme/colors.dart';
-import 'package:myapp/providers/character_provider.dart'; // 1. Importa o novo provider
+import 'package:myapp/providers/character_provider.dart';
+import 'package:myapp/providers/inventory_provider.dart';
 
 // Gerenciador de Estado para o Tema
 class ThemeProvider with ChangeNotifier {
@@ -28,7 +29,8 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (context) => ThemeProvider()),
-          ChangeNotifierProvider(create: (context) => CharacterProvider()), // <-- Adicionado!
+          ChangeNotifierProvider(create: (context) => CharacterProvider()),
+          ChangeNotifierProvider(create: (context) => InventoryProvider()),
         ],
         child: const MyApp(),
       ),

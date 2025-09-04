@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,7 +5,8 @@ import 'package:myapp/main.dart';
 import 'package:myapp/screens/dashboard_screen.dart';
 import 'package:myapp/screens/tasks_screen.dart';
 import 'package:myapp/screens/habits_screen.dart';
-import 'package:myapp/screens/character_screen.dart'; // Importando a nova tela de personagem
+import 'package:myapp/screens/character_screen.dart';
+import 'package:myapp/screens/shop_screen.dart';
 
 // Chaves para as telas que precisam de acesso externo
 final GlobalKey<TasksScreenState> tasksScreenKey = GlobalKey<TasksScreenState>();
@@ -31,8 +31,8 @@ class _MainScreenState extends State<MainScreen> {
       const DashboardScreen(),
       HabitsScreen(key: habitsScreenKey),
       TasksScreen(key: tasksScreenKey),
-      const CharacterScreen(), // <--- Tela do personagem atualizada
-      const Text('Tela da Loja'),
+      const CharacterScreen(),
+      const ShopScreen(),
     ];
   }
 
@@ -45,9 +45,12 @@ class _MainScreenState extends State<MainScreen> {
   AppBar _buildAppBar() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final theme = Theme.of(context);
+    // Adicionando o título da Loja
     final List<String> titles = ['Dashboard', 'Hábitos', 'Tarefas', 'Personagem', 'Loja'];
 
     return AppBar(
+      // Centralizando o título para consistência
+      centerTitle: true,
       title: Text(titles[_selectedIndex], style: theme.textTheme.titleLarge),
       actions: [
         IconButton(icon: const Icon(Icons.notifications_none), onPressed: () {}),

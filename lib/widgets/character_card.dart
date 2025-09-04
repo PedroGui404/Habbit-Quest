@@ -73,7 +73,7 @@ class CharacterCard extends StatelessWidget {
             height: double.infinity,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => Container(
-              color: theme.colorScheme.onSurface.withOpacity(0.1),
+              color: theme.colorScheme.onSurface.withAlpha(26),
               child: const Center(child: Icon(Icons.error_outline, color: Colors.grey)),
             ),
           ),
@@ -161,7 +161,7 @@ class CharacterCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: LinearProgressIndicator(
             value: value / 100,
-            backgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
+            backgroundColor: theme.colorScheme.onSurface.withAlpha(26),
             valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 10,
           ),
