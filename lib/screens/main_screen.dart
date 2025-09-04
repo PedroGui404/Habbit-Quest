@@ -5,11 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:myapp/main.dart';
 import 'package:myapp/screens/dashboard_screen.dart';
 import 'package:myapp/screens/tasks_screen.dart';
-import 'package:myapp/screens/habits_screen.dart'; // Importando a nova tela
+import 'package:myapp/screens/habits_screen.dart';
+import 'package:myapp/screens/character_screen.dart'; // Importando a nova tela de personagem
 
 // Chaves para as telas que precisam de acesso externo
 final GlobalKey<TasksScreenState> tasksScreenKey = GlobalKey<TasksScreenState>();
-final GlobalKey<HabitsScreenState> habitsScreenKey = GlobalKey<HabitsScreenState>(); // Nova chave para hábitos
+final GlobalKey<HabitsScreenState> habitsScreenKey = GlobalKey<HabitsScreenState>();
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -28,9 +29,9 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _widgetOptions = <Widget>[
       const DashboardScreen(),
-      HabitsScreen(key: habitsScreenKey), // Tela de hábitos com a chave
+      HabitsScreen(key: habitsScreenKey),
       TasksScreen(key: tasksScreenKey),
-      const Text('Tela do Personagem'),
+      const CharacterScreen(), // <--- Tela do personagem atualizada
       const Text('Tela da Loja'),
     ];
   }

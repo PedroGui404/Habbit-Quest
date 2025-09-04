@@ -1,15 +1,17 @@
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // 1. Importar o Provider
 import 'package:myapp/widgets/character_card.dart';
 import 'package:myapp/widgets/add_habit_modal.dart';
+import 'package:myapp/providers/character_provider.dart'; // 2. Importar o CharacterProvider
 
-// Modelo para um Hábito
+// Modelo para um Hábito (sem alterações)
 class Habit {
   final String title;
   final IconData icon;
   final String category;
   final FrequencyType frequencyType;
-  final List<int> monthlyDays; // Dias do mês (1-31) se a frequência for mensal
+  final List<int> monthlyDays;
   bool isCompletedToday;
 
   Habit({
@@ -32,8 +34,8 @@ class HabitsScreen extends StatefulWidget {
 }
 
 class HabitsScreenState extends State<HabitsScreen> {
+  // Dados de exemplo (sem alterações)
   final List<Habit> _habits = [
-    // Dados de exemplo
     Habit(title: 'Ler 10 páginas', icon: Icons.book, category: 'Desenvolvimento', frequencyType: FrequencyType.diario),
     Habit(title: 'Beber 2L de água', icon: Icons.local_drink, category: 'Saúde', frequencyType: FrequencyType.diario, isCompletedToday: true),
     Habit(title: 'Pagar fatura do cartão', icon: Icons.payment, category: 'Finanças', frequencyType: FrequencyType.mensal, monthlyDays: [15]),
@@ -61,6 +63,9 @@ class HabitsScreenState extends State<HabitsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // 3. Conectar ao CharacterProvider
+    final characterProvider = Provider.of<CharacterProvider>(context);
+
     final dailyHabits = _habits.where((h) => h.frequencyType == FrequencyType.diario).toList();
     final monthlyHabits = _habits.where((h) => h.frequencyType == FrequencyType.mensal).toList();
 
@@ -70,10 +75,15 @@ class HabitsScreenState extends State<HabitsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const CharacterCard(),
+            // 4. O CharacterCard agora usa os dados do provider
+            CharacterCard(
+              backgroundImage: characterProvider.selectedBackground,
+              characterImage: characterProvider.selectedCharacter,
+              position: characterProvider.currentPosition,
+            ),
             const SizedBox(height: 24),
 
-            // Seção de Hábitos Diários
+            // O resto da tela permanece o mesmo
             if (dailyHabits.isNotEmpty) ...[
               Text('Hábitos Diários', style: theme.textTheme.titleLarge),
               const SizedBox(height: 12),
@@ -89,7 +99,6 @@ class HabitsScreenState extends State<HabitsScreen> {
               const SizedBox(height: 24),
             ],
 
-            // Seção de Hábitos Mensais
             if (monthlyHabits.isNotEmpty) ...[
               Text('Hábitos Mensais', style: theme.textTheme.titleLarge),
               const SizedBox(height: 12),
@@ -122,7 +131,7 @@ class HabitsScreenState extends State<HabitsScreen> {
   }
 }
 
-// Widget para o Card de Hábito
+// Widget para o Card de Hábito (sem alterações)
 class HabitCard extends StatefulWidget {
   final Habit habit;
   const HabitCard({super.key, required this.habit});

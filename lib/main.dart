@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:myapp/screens/main_screen.dart';
 import 'package:myapp/theme/colors.dart';
+import 'package:myapp/providers/character_provider.dart'; // 1. Importa o novo provider
 
 // Gerenciador de Estado para o Tema
 class ThemeProvider with ChangeNotifier {
@@ -23,8 +24,12 @@ void main() {
   // Inicializa a formatação de data para o local pt_BR
   initializeDateFormatting('pt_BR', null).then((_) {
     runApp(
-      ChangeNotifierProvider(
-        create: (context) => ThemeProvider(),
+      // 2. Usa MultiProvider para registrar múltiplos providers
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (context) => ThemeProvider()),
+          ChangeNotifierProvider(create: (context) => CharacterProvider()), // <-- Adicionado!
+        ],
         child: const MyApp(),
       ),
     );

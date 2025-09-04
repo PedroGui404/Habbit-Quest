@@ -1,6 +1,8 @@
 
 import 'package:flutter/material.dart';
-import 'package:myapp/widgets/character_card.dart'; // Importa o novo widget
+import 'package:provider/provider.dart'; // 1. Importar o Provider
+import 'package:myapp/widgets/character_card.dart'; 
+import 'package:myapp/providers/character_provider.dart'; // 2. Importar o CharacterProvider
 
 // Modelos de dados (mantidos para o conteúdo do dashboard)
 class Habit {
@@ -24,6 +26,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  // Dados de exemplo para o dashboard
   final List<Habit> _habits = [
     Habit(icon: Icons.water_drop, title: 'Beber 2L de água', subtitle: 'Saúde • Diário'),
     Habit(icon: Icons.book, title: 'Estudar Flutter por 30min', subtitle: 'Estudo • Seg a Sex'),
@@ -39,6 +42,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // 3. Conectar ao CharacterProvider para ler os dados do personagem
+    final characterProvider = Provider.of<CharacterProvider>(context);
 
     int completedHabits = _habits.where((h) => h.isDone).length;
     int completedTasks = _tasks.where((t) => t.isDone).length;
@@ -49,11 +54,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Seção do Personagem (agora usando o widget reutilizável) ---
-            const CharacterCard(),
+            // 4. O CharacterCard agora usa os dados do provider
+            CharacterCard(
+              backgroundImage: characterProvider.selectedBackground,
+              characterImage: characterProvider.selectedCharacter,
+              position: characterProvider.currentPosition,
+            ),
             const SizedBox(height: 24),
 
-            // --- Cards de Resumo ---
+            // --- O resto do dashboard permanece o mesmo ---
             Row(
               children: [
                 Expanded(child: _buildSummaryCard('Hábitos', completedHabits, _habits.length, theme.primaryColor)),
@@ -63,13 +72,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 24),
 
-            // --- Seção de Hábitos ---
             Text('Hábitos de Hoje', style: theme.textTheme.titleLarge),
             const SizedBox(height: 12),
             _buildHabitList(),
             const SizedBox(height: 24),
 
-            // --- Seção de Tarefas ---
             Text('Tarefas de Hoje', style: theme.textTheme.titleLarge),
             const SizedBox(height: 12),
             _buildTaskList(),
@@ -79,7 +86,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // --- Widgets auxiliares ---
+  // --- Widgets auxiliares (sem alterações) ---
 
   Widget _buildSummaryCard(String title, int completed, int total, Color indicatorColor) {
     final theme = Theme.of(context);

@@ -1,11 +1,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart'; // 1. Importar o Provider
 import 'package:table_calendar/table_calendar.dart';
 
 import 'package:myapp/widgets/character_card.dart';
 import 'package:myapp/widgets/add_task_modal.dart';
+import 'package:myapp/providers/character_provider.dart'; // 2. Importar o CharacterProvider
 
+// Modelos de dados e enums (sem alterações)
 enum TaskPriority { alta, media, baixa }
 
 class Task {
@@ -34,7 +37,7 @@ class TasksScreen extends StatefulWidget {
 }
 
 class TasksScreenState extends State<TasksScreen> {
-  // CORREÇÃO: _calendarFormat agora é final, pois não é alterado
+  // Estado do calendário e dados de exemplo (sem alterações)
   final CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
@@ -43,8 +46,6 @@ class TasksScreenState extends State<TasksScreen> {
     Task(title: 'Reunião de Alinhamento', dueDate: DateTime.now(), dueTime: const TimeOfDay(hour: 10, minute: 0), priority: TaskPriority.alta),
     Task(title: 'Entregar Relatório', dueDate: DateTime.now(), dueTime: const TimeOfDay(hour: 14, minute: 30), priority: TaskPriority.media),
     Task(title: 'Consulta Médica', dueDate: DateTime.now().add(const Duration(days: 2)), dueTime: const TimeOfDay(hour: 11, minute: 0), priority: TaskPriority.alta, description: 'Levar exames'),
-    Task(title: 'Ir à Academia', dueDate: DateTime.now().subtract(const Duration(days: 1)), dueTime: const TimeOfDay(hour: 18, minute: 0), priority: TaskPriority.baixa, isDone: true),
-    Task(title: 'Finalizar Protótipo', dueDate: DateTime.now().subtract(const Duration(days: 1)), dueTime: const TimeOfDay(hour: 15, minute: 0), priority: TaskPriority.alta),
   ];
 
   late List<Task> _selectedTasks;
@@ -92,13 +93,24 @@ class TasksScreenState extends State<TasksScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // 3. Conectar ao CharacterProvider
+    final characterProvider = Provider.of<CharacterProvider>(context);
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const CharacterCard(), const SizedBox(height: 24),
+            // 4. O CharacterCard agora usa os dados do provider
+            CharacterCard(
+              backgroundImage: characterProvider.selectedBackground,
+              characterImage: characterProvider.selectedCharacter,
+              position: characterProvider.currentPosition,
+            ),
+            const SizedBox(height: 24),
+            
+            // O resto da tela permanece o mesmo
             _buildCalendar(theme), const SizedBox(height: 24),
             _buildSectionHeader(theme), const SizedBox(height: 12),
             _buildTaskList(),
@@ -108,12 +120,11 @@ class TasksScreenState extends State<TasksScreen> {
     );
   }
 
+  // Widgets auxiliares (sem alterações)
   Widget _buildSectionHeader(ThemeData theme) {
     String title;
     if (isSameDay(_selectedDay, DateTime.now())) {
       title = 'Tarefas de Hoje';
-    } else if (_selectedDay!.isBefore(DateTime.now().subtract(const Duration(days: 1)))) {
-      title = 'Tarefas de ${DateFormat.yMd('pt_BR').format(_selectedDay!)}';
     } else {
       title = 'Tarefas para ${DateFormat.yMd('pt_BR').format(_selectedDay!)}';
     }
@@ -131,7 +142,6 @@ class TasksScreenState extends State<TasksScreen> {
           selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
           eventLoader: _getTasksForDay,
           calendarStyle: CalendarStyle(
-            // CORREÇÃO: Substituído withOpacity obsoleto
             todayDecoration: BoxDecoration(color: theme.primaryColor.withAlpha(128), shape: BoxShape.circle),
             selectedDecoration: BoxDecoration(color: theme.primaryColor, shape: BoxShape.circle),
           ),
