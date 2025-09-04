@@ -2,12 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:myapp/main.dart'; // Acesso ao ThemeProvider
+import 'package:myapp/main.dart';
 import 'package:myapp/screens/dashboard_screen.dart';
 import 'package:myapp/screens/tasks_screen.dart';
+import 'package:myapp/screens/habits_screen.dart'; // Importando a nova tela
 
-// A chave global agora aponta para a classe de estado pública
+// Chaves para as telas que precisam de acesso externo
 final GlobalKey<TasksScreenState> tasksScreenKey = GlobalKey<TasksScreenState>();
+final GlobalKey<HabitsScreenState> habitsScreenKey = GlobalKey<HabitsScreenState>(); // Nova chave para hábitos
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -26,10 +28,10 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _widgetOptions = <Widget>[
       const DashboardScreen(),
-      const Text('Tela de Hábitos'), // Placeholder
-      TasksScreen(key: tasksScreenKey), // A chave continua associada aqui
-      const Text('Tela do Personagem'), // Placeholder
-      const Text('Tela da Loja'), // Placeholder
+      HabitsScreen(key: habitsScreenKey), // Tela de hábitos com a chave
+      TasksScreen(key: tasksScreenKey),
+      const Text('Tela do Personagem'),
+      const Text('Tela da Loja'),
     ];
   }
 
@@ -57,6 +59,16 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  // Função para determinar qual ação o FAB deve executar
+  VoidCallback? _getFabCallback() {
+    if (_selectedIndex == 1) {
+      return () => habitsScreenKey.currentState?.showAddHabitModal();
+    } else if (_selectedIndex == 2) {
+      return () => tasksScreenKey.currentState?.showAddTaskModal();
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,10 +77,9 @@ class _MainScreenState extends State<MainScreen> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            // MODIFICADO: Substituído DrawerHeader por um Container com altura customizada
             Container(
-              height: 110.0, // Altura reduzida
-              padding: const EdgeInsets.fromLTRB(16, 50, 16, 16), // Padding para alinhar o texto
+              height: 110.0, 
+              padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
               decoration: BoxDecoration(color: Theme.of(context).primaryColor),
               child: Text(
                 'Menu',
@@ -98,12 +109,9 @@ class _MainScreenState extends State<MainScreen> {
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
-      floatingActionButton: _selectedIndex == 2
+      floatingActionButton: _getFabCallback() != null
           ? FloatingActionButton(
-              onPressed: () {
-                // A chamada agora funciona corretamente
-                tasksScreenKey.currentState?.showAddTaskModal();
-              },
+              onPressed: _getFabCallback(),
               child: const Icon(Icons.add),
             )
           : null,
