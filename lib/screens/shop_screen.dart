@@ -1,11 +1,12 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:video_player/video_player.dart';
 
 import 'package:myapp/data/shop_items.dart';
 import 'package:myapp/models/inventory_item.dart';
-import 'package:myapp/providers/character_provider.dart';
 import 'package:myapp/providers/inventory_provider.dart';
-import 'package:myapp/widgets/character_card.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -57,7 +58,6 @@ class _ShopScreenState extends State<ShopScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final characterProvider = Provider.of<CharacterProvider>(context);
     final theme = Theme.of(context);
 
     final currentItems = _getItemsForCategory(_selectedCategoryIndex);
@@ -67,11 +67,7 @@ class _ShopScreenState extends State<ShopScreen> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          CharacterCard(
-            backgroundImage: characterProvider.selectedBackground,
-            characterImage: characterProvider.selectedCharacter,
-            position: characterProvider.currentPosition,
-          ),
+          const _VendorCard(),
           const SizedBox(height: 24),
           SizedBox(
             height: 575,
@@ -113,7 +109,7 @@ class _ShopScreenState extends State<ShopScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: Column(
           children: [
-            Icon(Icons.storefront_outlined, color: Colors.amber.shade700, size: 40),
+            Icon(Icons.storefront_outlined, color: Colors.amber, size: 40),
             const SizedBox(height: 16),
             Expanded(
               child: items.isEmpty
@@ -159,6 +155,109 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 }
 
+class _VendorCard extends StatefulWidget {
+  const _VendorCard();
+
+  @override
+  State<_VendorCard> createState() => _VendorCardState();
+}
+
+class _VendorCardState extends State<_VendorCard> {
+  late VideoPlayerController _controller;
+  late String _randomQuote;
+
+  final List<String> _vendorQuotes = [
+    "Ah, um herói! E espero que traga ouro!",
+    "Promoções imperdíveis... só que não!",
+    "Gaste tudo, volte sempre!",
+    "Nada como cheirar ouro pela manhã!",
+    "Se for pagar com histórias, melhor que sejam boas.",
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _randomQuote = _vendorQuotes[Random().nextInt(_vendorQuotes.length)];
+
+    _controller = VideoPlayerController.asset('assets/images/animations/vendedor1/vendedor1_idle.mp4')
+      ..initialize().then((_) {
+        setState(() {});
+        _controller.setLooping(true);
+        _controller.play();
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final inventory = Provider.of<InventoryProvider>(context);
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        height: 200,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Seja bem vindo(a)!',
+                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '— "$_randomQuote"'
+                      , style: theme.textTheme.titleMedium?.copyWith(fontStyle: FontStyle.italic, color: theme.textTheme.bodySmall?.color),
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Row(children: [const Icon(Icons.monetization_on, color: Colors.amber, size: 20), const SizedBox(width: 4), Text(inventory.coins.toString(), style: theme.textTheme.titleLarge)])
+                      , const SizedBox(width: 16),
+Row(children: [const Icon(Icons.diamond_outlined, color: Colors.cyan, size: 20), const SizedBox(width: 4), Text(inventory.diamonds.toString(), style: theme.textTheme.titleLarge)])
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () {},
+                      icon: const Icon(Icons.card_giftcard_rounded),
+                      label: const Text('Resgatar Prêmio Diário'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: _controller.value.isInitialized
+                  ? VideoPlayer(_controller)
+                  : const Center(child: CircularProgressIndicator()),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _CategoryButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -195,9 +294,9 @@ class ShopItemCard extends StatelessWidget {
 
     Widget priceWidget;
     if (item.priceDiamonds > 0) {
-      priceWidget = Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.diamond_outlined, color: Colors.cyan.shade300, size: 16), const SizedBox(width: 4), Text(item.priceDiamonds.toString(), style: theme.textTheme.titleSmall)]);
+      priceWidget = Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.diamond_outlined, color: Colors.cyan, size: 16), const SizedBox(width: 4), Text(item.priceDiamonds.toString(), style: theme.textTheme.titleSmall)]);
     } else {
-      priceWidget = Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.monetization_on, color: Colors.amber.shade700, size: 16), const SizedBox(width: 4), Text(item.priceCoins.toString(), style: theme.textTheme.titleSmall)]);
+      priceWidget = Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.monetization_on, color: Colors.amber, size: 16), const SizedBox(width: 4), Text(item.priceCoins.toString(), style: theme.textTheme.titleSmall)]);
     }
 
     return Card(
