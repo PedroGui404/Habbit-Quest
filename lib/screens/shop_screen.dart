@@ -18,6 +18,19 @@ class _ShopScreenState extends State<ShopScreen> {
   int _selectedCategoryIndex = 0;
   int _currentPage = 0;
   final int _itemsPerPage = 4;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   List<ShopItem> _getItemsForCategory(int index) {
     switch (index) {
@@ -32,6 +45,16 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
+  void _onCategorySelected(int index) {
+    setState(() {
+      _selectedCategoryIndex = index;
+      _currentPage = 0;
+      if (_pageController.hasClients) {
+        _pageController.jumpToPage(0);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final characterProvider = Provider.of<CharacterProvider>(context);
@@ -39,7 +62,6 @@ class _ShopScreenState extends State<ShopScreen> {
 
     final currentItems = _getItemsForCategory(_selectedCategoryIndex);
     final totalPages = (currentItems.length / _itemsPerPage).ceil();
-    final paginatedItems = currentItems.skip(_currentPage * _itemsPerPage).take(_itemsPerPage).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -52,7 +74,7 @@ class _ShopScreenState extends State<ShopScreen> {
           ),
           const SizedBox(height: 24),
           SizedBox(
-            height: 480, // Altura fixa para o card da loja
+            height: 575,
             child: Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               elevation: 4,
@@ -61,7 +83,7 @@ class _ShopScreenState extends State<ShopScreen> {
                 children: [
                   _buildNavigationMenu(theme),
                   const VerticalDivider(width: 1, thickness: 1),
-                  _buildShopContent(theme, paginatedItems, totalPages),
+                  _buildShopContent(theme, currentItems, totalPages),
                 ],
               ),
             ),
@@ -73,44 +95,16 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Widget _buildNavigationMenu(ThemeData theme) {
     return Container(
-      width: 100,
-      padding: const EdgeInsets.symmetric(vertical: 24.0),
-      color: theme.cardColor, // Garante consistência de cor
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          _CategoryButton(
-            icon: Icons.person_search_rounded,
-            label: 'Personagens',
-            isSelected: _selectedCategoryIndex == 0,
-            onTap: () => setState(() {
-              _selectedCategoryIndex = 0;
-              _currentPage = 0;
-            }),
-          ),
+        width: 100,
+        padding: const EdgeInsets.symmetric(vertical: 24.0),
+        color: theme.cardColor,
+        child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+          _CategoryButton(icon: Icons.person_search_rounded, label: 'Personagens', isSelected: _selectedCategoryIndex == 0, onTap: () => _onCategorySelected(0)),
           const SizedBox(height: 24),
-          _CategoryButton(
-            icon: Icons.landscape_rounded,
-            label: 'Fundos',
-            isSelected: _selectedCategoryIndex == 1,
-            onTap: () => setState(() {
-              _selectedCategoryIndex = 1;
-              _currentPage = 0;
-            }),
-          ),
+          _CategoryButton(icon: Icons.landscape_rounded, label: 'Fundos', isSelected: _selectedCategoryIndex == 1, onTap: () => _onCategorySelected(1)),
           const SizedBox(height: 24),
-          _CategoryButton(
-            icon: Icons.science_rounded,
-            label: 'Poções',
-            isSelected: _selectedCategoryIndex == 2,
-            onTap: () => setState(() {
-              _selectedCategoryIndex = 2;
-              _currentPage = 0;
-            }),
-          ),
-        ],
-      ),
-    );
+          _CategoryButton(icon: Icons.science_rounded, label: 'Poções', isSelected: _selectedCategoryIndex == 2, onTap: () => _onCategorySelected(2)),
+        ]));
   }
 
   Widget _buildShopContent(ThemeData theme, List<ShopItem> items, int totalPages) {
@@ -119,51 +113,48 @@ class _ShopScreenState extends State<ShopScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: Column(
           children: [
-            Text(
-              'Loja',
-              style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
+            Icon(Icons.storefront_outlined, color: Colors.amber.shade700, size: 40),
             const SizedBox(height: 16),
             Expanded(
               child: items.isEmpty
                   ? Center(child: Text('Nenhum item disponível.', style: theme.textTheme.bodyMedium))
-                  : GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 0.8,
-                      ),
-                      itemCount: items.length,
-                      itemBuilder: (context, index) => ShopItemCard(item: items[index]),
+                  : PageView.builder(
+                      controller: _pageController,
+                      itemCount: totalPages,
+                      onPageChanged: (page) => setState(() => _currentPage = page),
+                      itemBuilder: (context, pageIndex) {
+                        final pageItems = items.skip(pageIndex * _itemsPerPage).take(_itemsPerPage).toList();
+                        return GridView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.8),
+                          itemCount: pageItems.length,
+                          itemBuilder: (context, itemIndex) => ShopItemCard(item: pageItems[itemIndex]),
+                        );
+                      },
                     ),
             ),
-            if (totalPages > 0)
-              _buildPaginationControls(totalPages),
+            if (totalPages > 1)
+              _buildPageIndicator(totalPages, theme),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPaginationControls(int totalPages) {
+  Widget _buildPageIndicator(int totalPages, ThemeData theme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: _currentPage > 0
-              ? () => setState(() => _currentPage--)
-              : null,
-        ),
-        Text('Página ${_currentPage + 1} de $totalPages'),
-        IconButton(
-          icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
-          onPressed: _currentPage < totalPages - 1
-              ? () => setState(() => _currentPage++)
-              : null,
-        ),
-      ],
+      children: List.generate(totalPages, (index) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _currentPage == index ? theme.colorScheme.primary : Colors.grey.shade400,
+          ),
+        );
+      }),
     );
   }
 }
@@ -173,31 +164,20 @@ class _CategoryButton extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-
   const _CategoryButton({required this.icon, required this.label, required this.isSelected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = isSelected ? theme.colorScheme.primary : theme.unselectedWidgetColor;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 80,
         padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.primary.withAlpha(25) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(label, textAlign: TextAlign.center, style: theme.textTheme.bodySmall?.copyWith(color: color, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-          ],
-        ),
+        decoration: BoxDecoration(color: isSelected ? theme.colorScheme.primary.withAlpha(25) : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+        child: Column(children: [Icon(icon, color: color, size: 32), const SizedBox(height: 8), Text(label, textAlign: TextAlign.center, style: theme.textTheme.bodySmall?.copyWith(color: color, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal))]),
       ),
     );
   }
@@ -215,9 +195,9 @@ class ShopItemCard extends StatelessWidget {
 
     Widget priceWidget;
     if (item.priceDiamonds > 0) {
-      priceWidget = Row(mainAxisSize: MainAxisSize.min, children: [ Icon(Icons.diamond_outlined, color: Colors.cyan.shade300, size: 16), const SizedBox(width: 4), Text(item.priceDiamonds.toString(), style: theme.textTheme.titleSmall) ]);
+      priceWidget = Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.diamond_outlined, color: Colors.cyan.shade300, size: 16), const SizedBox(width: 4), Text(item.priceDiamonds.toString(), style: theme.textTheme.titleSmall)]);
     } else {
-      priceWidget = Row(mainAxisSize: MainAxisSize.min, children: [ Icon(Icons.monetization_on, color: Colors.amber.shade700, size: 16), const SizedBox(width: 4), Text(item.priceCoins.toString(), style: theme.textTheme.titleSmall) ]);
+      priceWidget = Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.monetization_on, color: Colors.amber.shade700, size: 16), const SizedBox(width: 4), Text(item.priceCoins.toString(), style: theme.textTheme.titleSmall)]);
     }
 
     return Card(
@@ -226,30 +206,27 @@ class ShopItemCard extends StatelessWidget {
       shadowColor: Colors.black.withAlpha(50),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(child: Padding(padding: const EdgeInsets.all(8.0), child: Image.asset(item.assetPath, fit: BoxFit.contain))),
-            Text(item.name, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 8),
-            priceWidget,
-            const SizedBox(height: 12),
-            if (isOwned)
-              const Chip(label: Text('Adquirido'), backgroundColor: Colors.green, labelStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
-            else
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: theme.colorScheme.onPrimary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10)),
-                onPressed: () {
-                  if (inventoryProvider.canAfford(item)) {
-                    inventoryProvider.buyItem(item);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Recursos insuficientes.'), backgroundColor: Colors.red));
-                  }
-                },
-                child: const Text('Comprar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-          ],
-        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Expanded(child: Padding(padding: const EdgeInsets.all(8.0), child: Image.asset(item.assetPath, fit: BoxFit.contain))),
+          Text(item.name, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 4),
+          priceWidget,
+          const SizedBox(height: 8),
+          if (isOwned)
+            const Chip(label: Text('Adquirido'), backgroundColor: Colors.green, labelStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
+          else
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: theme.colorScheme.onPrimary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10)),
+              onPressed: () {
+                if (inventoryProvider.canAfford(item)) {
+                  inventoryProvider.buyItem(item);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Recursos insuficientes.'), backgroundColor: Colors.red));
+                }
+              },
+              child: const Text('Comprar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+        ]),
       ),
     );
   }
