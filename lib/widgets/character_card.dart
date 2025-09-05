@@ -1,5 +1,7 @@
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:myapp/providers/inventory_provider.dart';
 
 // Definição para posicionamento customizado do personagem
 class CharacterPosition {
@@ -178,17 +180,21 @@ class CharacterCard extends StatelessWidget {
           color: theme.colorScheme.onSurface,
         );
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Icon(Icons.monetization_on, color: Colors.amber[700], size: 22),
-        const SizedBox(width: 4),
-        Text('150', style: textStyle),
-        const SizedBox(width: 20),
-        Icon(Icons.diamond_outlined, color: Colors.cyan[400], size: 22),
-        const SizedBox(width: 4),
-        Text('10', style: textStyle),
-      ],
+    return Consumer<InventoryProvider>(
+      builder: (context, inventory, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Icon(Icons.monetization_on, color: Colors.amber[700], size: 22),
+            const SizedBox(width: 4),
+            Text(inventory.coins.toString(), style: textStyle),
+            const SizedBox(width: 20),
+            Icon(Icons.diamond_outlined, color: Colors.cyan[400], size: 22),
+            const SizedBox(width: 4),
+            Text(inventory.diamonds.toString(), style: textStyle),
+          ],
+        );
+      },
     );
   }
 }

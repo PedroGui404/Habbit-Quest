@@ -14,7 +14,7 @@ final List<ShopItem> shopItems = [
     id: 'character_3_harrypotter',
     name: 'Wizard',
     assetPath: 'assets/images/characters/character_3_harrypotter.png',
-    priceCoins: 1000,
+    priceCoins: 0, // Corrigido: este item custa apenas diamantes
     priceDiamonds: 10,
     rarity: ItemRarity.epico,
     type: ItemType.character,

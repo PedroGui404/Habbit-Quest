@@ -1,171 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'package:myapp/models/inventory_item.dart';
 import 'package:myapp/providers/character_provider.dart';
 import 'package:myapp/providers/inventory_provider.dart';
 import 'package:myapp/widgets/character_card.dart';
-import 'package:myapp/widgets/paginated_grid.dart';
-import 'package:myapp/models/inventory_item.dart';
 
-class CharacterScreen extends StatefulWidget {
+class CharacterScreen extends StatelessWidget {
   const CharacterScreen({super.key});
 
   @override
-  State<CharacterScreen> createState() => _CharacterScreenState();
-}
-
-class _CharacterScreenState extends State<CharacterScreen> {
-  @override
   Widget build(BuildContext context) {
     final characterProvider = Provider.of<CharacterProvider>(context);
-    final inventoryProvider = Provider.of<InventoryProvider>(context);
     final theme = Theme.of(context);
 
-    final ownedCharacters = inventoryProvider.ownedItems.where((item) => item.type == ItemType.character).toList();
-    final ownedBackgrounds = inventoryProvider.ownedItems.where((item) => item.type == ItemType.background).toList();
-    final ownedPotions = inventoryProvider.ownedItems.where((item) => item.type == ItemType.potion).toList();
-
-
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CharacterCard(
-                backgroundImage: characterProvider.selectedBackground,
-                characterImage: characterProvider.selectedCharacter,
-                position: characterProvider.currentPosition,
-              ),
-              const SizedBox(height: 24),
-
-              Card(
-                color: theme.cardColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      TabBar(
-                        indicatorColor: theme.colorScheme.primary,
-                        labelColor: theme.colorScheme.primary,
-                        unselectedLabelColor: theme.textTheme.bodyLarge?.color?.withAlpha(178),
-                        tabs: const [
-                          Tab(text: 'Personagens'),
-                          Tab(text: 'Fundos'),
-                          Tab(text: 'Poções'),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 250, // Adjusted height to accommodate paginator
-                        child: TabBarView(
-                          children: [
-                            PaginatedGrid<ShopItem>(
-                              items: ownedCharacters,
-                              itemBuilder: (item) {
-                                final bool isSelected = characterProvider.selectedCharacter == item.assetPath;
-                                return GestureDetector(
-                                  onTap: () => characterProvider.updateCharacter(item.assetPath),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.withAlpha(128),
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(6),
-                                      child: Image.asset(item.assetPath, fit: BoxFit.cover),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            PaginatedGrid<ShopItem>(
-                              items: ownedBackgrounds,
-                              itemBuilder: (item) {
-                                final bool isSelected = characterProvider.selectedBackground == item.assetPath;
-                                return GestureDetector(
-                                  onTap: () => characterProvider.updateBackground(item.assetPath),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.withAlpha(128),
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(6),
-                                      child: Image.asset(item.assetPath, fit: BoxFit.cover),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                             if (ownedPotions.isEmpty)
-                              Center(child: Text('Nenhuma poção no inventário.', style: theme.textTheme.bodyMedium))
-                            else
-                              PaginatedGrid<ShopItem>(
-                                items: ownedPotions,
-                                itemBuilder: (item) {
-                                  return Card(
-                                    child: Column(
-                                      children: [
-                                        Expanded(
-                                          child: Image.asset(item.assetPath, fit: BoxFit.cover),
-                                        ),
-                                        Text(item.name),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              _buildSectionCard(
-                theme: theme,
-                title: 'Melhorar Status',
-                content: Column(
-                  children: [
-                    _buildStatusRow(theme, 'Força', 10),
-                    _buildStatusRow(theme, 'Agilidade', 8),
-                    _buildStatusRow(theme, 'Inteligência', 12),
-                    const SizedBox(height: 10),
-                    Text('Pontos disponíveis: 5', style: theme.textTheme.bodySmall),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              Row(
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            CharacterCard(
+              backgroundImage: characterProvider.selectedBackground,
+              characterImage: characterProvider.selectedCharacter,
+              position: characterProvider.currentPosition,
+            ),
+            const SizedBox(height: 24),
+            const _InventoryCard(),
+            const SizedBox(height: 24),
+            _buildSectionCard(
+              theme: theme,
+              title: 'Melhorar Status',
+              content: Column(
                 children: [
-                  _buildInfoCard(theme, 'Batalhas', '15'),
-                  const SizedBox(width: 16),
-                  _buildInfoCard(theme, 'Vitórias', '10'),
-                   const SizedBox(width: 16),
-                  _buildInfoCard(theme, 'Derrotas', '5'),
+                  _buildStatusRow(theme, 'Força', 10),
+                  _buildStatusRow(theme, 'Agilidade', 8),
+                  _buildStatusRow(theme, 'Inteligência', 12),
+                  const SizedBox(height: 10),
+                  Text('Pontos disponíveis: 5', style: theme.textTheme.bodySmall),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                _buildInfoCard(theme, 'Batalhas', '15'),
+                const SizedBox(width: 16),
+                _buildInfoCard(theme, 'Vitórias', '10'),
+                const SizedBox(width: 16),
+                _buildInfoCard(theme, 'Derrotas', '5'),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // Widgets auxiliares (sem alterações)
   Widget _buildSectionCard({required ThemeData theme, required String title, required Widget content}) {
     return Card(
       color: theme.cardColor,
@@ -217,6 +109,230 @@ class _CharacterScreenState extends State<CharacterScreen> {
               Text(value, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InventoryCard extends StatefulWidget {
+  const _InventoryCard();
+
+  @override
+  State<_InventoryCard> createState() => _InventoryCardState();
+}
+
+class _InventoryCardState extends State<_InventoryCard> {
+  int _selectedCategoryIndex = 0;
+  int _currentPage = 0;
+  final int _itemsPerPage = 4;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  List<ShopItem> _getItemsForCategory(InventoryProvider inventory, int index) {
+    final items = inventory.ownedItems;
+    switch (index) {
+      case 0:
+        return items.where((item) => item.type == ItemType.character).toList();
+      case 1:
+        return items.where((item) => item.type == ItemType.background).toList();
+      case 2:
+        return items.where((item) => item.type == ItemType.potion).toList();
+      default:
+        return [];
+    }
+  }
+
+  void _onCategorySelected(int index) {
+    setState(() {
+      _selectedCategoryIndex = index;
+      _currentPage = 0;
+      if (_pageController.hasClients) {
+        _pageController.jumpToPage(0);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final inventoryProvider = Provider.of<InventoryProvider>(context);
+    final characterProvider = Provider.of<CharacterProvider>(context);
+
+    final currentItems = _getItemsForCategory(inventoryProvider, _selectedCategoryIndex);
+    final totalPages = (currentItems.length / _itemsPerPage).ceil();
+
+    return SizedBox(
+      height: 480, // Increased height to fit 4 items
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 4,
+        clipBehavior: Clip.antiAlias,
+        child: Row(
+          children: [
+            _buildNavigationMenu(theme),
+            const VerticalDivider(width: 1, thickness: 1),
+            _buildInventoryContent(theme, characterProvider, currentItems, totalPages),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavigationMenu(ThemeData theme) {
+    return Container(
+      width: 100,
+      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      color: theme.cardColor,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          _CategoryButton(icon: Icons.person, label: 'Personagens', isSelected: _selectedCategoryIndex == 0, onTap: () => _onCategorySelected(0)),
+          const SizedBox(height: 24),
+          _CategoryButton(icon: Icons.landscape, label: 'Fundos', isSelected: _selectedCategoryIndex == 1, onTap: () => _onCategorySelected(1)),
+          const SizedBox(height: 24),
+          _CategoryButton(icon: Icons.science, label: 'Poções', isSelected: _selectedCategoryIndex == 2, onTap: () => _onCategorySelected(2)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInventoryContent(ThemeData theme, CharacterProvider characterProvider, List<ShopItem> items, int totalPages) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: Column(
+          children: [
+            Icon(Icons.inventory_2_outlined, color: Colors.brown, size: 40),
+            const SizedBox(height: 16),
+            Expanded(
+              child: items.isEmpty
+                  ? Center(child: Text('Nenhum item nesta categoria.', style: theme.textTheme.bodyMedium))
+                  : PageView.builder(
+                      controller: _pageController,
+                      itemCount: totalPages,
+                      onPageChanged: (page) => setState(() => _currentPage = page),
+                      itemBuilder: (context, pageIndex) {
+                        final pageItems = items.skip(pageIndex * _itemsPerPage).take(_itemsPerPage).toList();
+                        return GridView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1, // Adjusted for better square-like items
+                          ),
+                          itemCount: pageItems.length,
+                          itemBuilder: (context, itemIndex) {
+                            final item = pageItems[itemIndex];
+                            bool isSelected = false;
+                            VoidCallback? onTapAction;
+
+                            if (item.type == ItemType.character) {
+                              isSelected = characterProvider.selectedCharacter == item.assetPath;
+                              onTapAction = () => characterProvider.updateCharacter(item.assetPath);
+                            } else if (item.type == ItemType.background) {
+                              isSelected = characterProvider.selectedBackground == item.assetPath;
+                              onTapAction = () => characterProvider.updateBackground(item.assetPath);
+                            }
+
+                            return _InventoryItemCard(item: item, isSelected: isSelected, onTap: onTapAction);
+                          },
+                        );
+                      },
+                    ),
+            ),
+            if (totalPages > 1) _buildPageIndicator(totalPages, theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPageIndicator(int totalPages, ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(totalPages, (index) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _currentPage == index ? theme.colorScheme.primary : Colors.grey.shade400,
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _CategoryButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CategoryButton({required this.icon, required this.label, required this.isSelected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = isSelected ? theme.colorScheme.primary : theme.unselectedWidgetColor;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 80,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? theme.colorScheme.primary.withAlpha(25) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 8),
+            Text(label, textAlign: TextAlign.center, style: theme.textTheme.bodySmall?.copyWith(color: color, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InventoryItemCard extends StatelessWidget {
+  final ShopItem item;
+  final bool isSelected;
+  final VoidCallback? onTap;
+
+  const _InventoryItemCard({required this.item, required this.isSelected, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent, width: 3),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Image.asset(item.assetPath, fit: BoxFit.contain),
         ),
       ),
     );
