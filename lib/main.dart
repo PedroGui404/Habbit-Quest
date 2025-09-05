@@ -2,9 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-import 'package:myapp/screens/dashboard_screen.dart';
+import 'package:myapp/screens/main_screen.dart';
 import 'package:myapp/theme/colors.dart';
+import 'package:myapp/providers/character_provider.dart';
+import 'package:myapp/providers/inventory_provider.dart';
 
 // Gerenciador de Estado para o Tema
 class ThemeProvider with ChangeNotifier {
@@ -18,12 +22,20 @@ class ThemeProvider with ChangeNotifier {
 }
 
 void main() {
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
-      child: const MyApp(),
-    ),
-  );
+  // Inicializa a formatação de data para o local pt_BR
+  initializeDateFormatting('pt_BR', null).then((_) {
+    runApp(
+      // 2. Usa MultiProvider para registrar múltiplos providers
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (context) => ThemeProvider()),
+          ChangeNotifierProvider(create: (context) => CharacterProvider()),
+          ChangeNotifierProvider(create: (context) => InventoryProvider()),
+        ],
+        child: const MyApp(),
+      ),
+    );
+  });
 }
 
 // Configuração do GoRouter
@@ -32,7 +44,7 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/',
       builder: (BuildContext context, GoRouterState state) {
-        return const DashboardScreen();
+        return const MainScreen();
       },
     ),
   ],
@@ -49,6 +61,18 @@ class MyApp extends StatelessWidget {
           routerConfig: _router,
           title: 'Gamified Habits',
           debugShowCheckedModeBanner: false,
+          
+          // Configuração de Localização
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('pt', 'BR'), // Português do Brasil
+          ],
+          locale: const Locale('pt', 'BR'),
+
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: themeProvider.themeMode,
