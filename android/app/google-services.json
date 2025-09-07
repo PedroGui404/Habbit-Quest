@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "126810708896",
+    "project_id": "habitquest-9dd7a",
+    "storage_bucket": "habitquest-9dd7a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:126810708896:android:047f18a02b8de6029ae2c5",
+        "android_client_info": {
+          "package_name": "com.example.myapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLHf4a_UfNUYqG2IvQtfsM4QpN-4jK0CY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
